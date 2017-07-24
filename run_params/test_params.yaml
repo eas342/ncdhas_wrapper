@@ -2,3 +2,4 @@ inputFiles: /data1/Local/AZLabStability/raw_copy/*.fits ## Wildcard search for r
 outputDir: /data1/Local/AZLabStability/red_02/ ## Output directory
 flags_all: "+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm" ## NCDHAS flags
 ## In this example, turn off almost everything
+description: This is an example parameter file. Edit this to make a new run file and a new name. This description string can contain rationale, discussion and other details about the run that may be useful to check later on.
