@@ -6,29 +6,32 @@ import glob
 from subprocess import check_output
 import subprocess
 from copy import deepcopy
+import yaml
+import sys
 
-ncdhasApp      = '/usr/local/ncdhas/ncdhas'
-AZstableDir = '/data1/Local/AZLabStability/raw_copy/'
-reducedDir = '/data1/Local/AZLabStability/red_02/'
+progData = yaml.load(open('prog_files/prog_dirs.yaml'))
+ncdhasApp      = progData['ncdhasCommand']
 
-#flags__MMM_stability   = '+cfg isimcv3 +ow +wi +wd +ws -rx +rc -rss +rsf +cbp +cs +cbs -cd +mf 2'
-flags_all = '+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm'
+## Old legacy flags
+# flags__MMM_stability   = '+cfg isimcv3 +ow +wi +wd +ws -rx +rc -rss +rsf +cbp +cs +cbs -cd +mf 2'
+# flags_all = '+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm'
 
 class ncFiles():
-    def __init__(self,fileDir,reduceDir,flags_input,testMode=False):
-        """ An object to hold the file list and run NCDHAS on """
-        for oneDir in [fileDir,reduceDir]:
+    def __init__(self,paramFile):
+        """ An object to hold the file list and run NCDHAS on
+        All .red, .dia, .slp, .cds and .txt files will be removed from the input
+        """
+        param = yaml.load(open(paramFile))
+        
+        self.inputFiles = param['inputFiles']
+        self.fileDir = os.path.dirname(self.inputFiles)
+        self.reduceDir = param['outputDir']
+        for oneDir in [self.fileDir,self.reduceDir]:
             if os.path.exists(oneDir) == False:
-                raise ValueError("Input directory "+oneDir+" not found")
+                raise ValueError("Specified directory "+oneDir+" not found")
         
-        self.fileDir = fileDir
-        self.reduceDir = reduceDir
+        fileList = glob.glob(self.inputFiles)
         
-        if testMode == True:
-            fileList = glob.glob(self.fileDir+'*I003.fits')
-        else:
-            fileList = glob.glob(self.fileDir+'*.fits')
-
         ## ignore processed files
         ignoretypes = ['.red.','.dia.','.slp.','.cds.','.txt']
         useList = deepcopy(fileList)
@@ -38,7 +41,7 @@ class ncFiles():
                     useList.remove(onefile)
         self.fileList = useList
         
-        self.flags = flags_input
+        self.flags = param['flags_all']
 
     def run_pipe(self):
         """ Runs the pipeline on the file list
@@ -48,7 +51,7 @@ class ncFiles():
         for oneFile in self.fileList:
             ## Make a symbolic link to the ramp
             baseName = os.path.basename(oneFile)
-            rampFile = reducedDir+baseName
+            rampFile = self.reduceDir+baseName
             if os.path.exists(rampFile) == False:
                 ## Only make a symlink if there isn't one there
                 os.symlink(oneFile,rampFile)
@@ -76,7 +79,13 @@ class ncFiles():
 
 
 if __name__ == "__main__":
-    fFiles = ncFiles(AZstableDir,reducedDir,flags_all)
-    fFiles.run_pipe()
-
-
+    """ Default command line run.
+    Searches the command line for an input parameter file
+    """
+    if len(sys.argv) > 1:
+        paramFile = sys.argv[1]
+    else:
+        paramFile = 'run_params/test_params.yaml'
+    
+    nc = ncFiles(paramFile)
+    nc.run_pipe()

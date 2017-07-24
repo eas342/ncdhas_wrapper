@@ -1,0 +1,4 @@
+inputFiles: /data1/Local/AZLabStability/raw_copy/*.fits ## Wildcard search for relevant FITS files
+outputDir: /data1/Local/AZLabStability/red_02/ ## Output directory
+flags_all: "+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm" ## NCDHAS flags
+## In this example, turn off almost everything
