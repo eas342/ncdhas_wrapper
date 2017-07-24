@@ -8,17 +8,22 @@ import subprocess
 from copy import deepcopy
 
 ncdhasApp      = '/usr/local/ncdhas/ncdhas'
-AZstableDir = '/data1/Local/AZLabStability/'
+AZstableDir = '/data1/Local/AZLabStability/raw_copy/'
+reducedDir = '/data1/Local/AZLabStability/red_02/'
 
 #flags__MMM_stability   = '+cfg isimcv3 +ow +wi +wd +ws -rx +rc -rss +rsf +cbp +cs +cbs -cd +mf 2'
 flags_all = '+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm'
 
 class ncFiles():
-    def __init__(self,fileDir,flags_input,testMode=False):
+    def __init__(self,fileDir,reduceDir,flags_input,testMode=False):
         """ An object to hold the file list and run NCDHAS on """
-
+        for oneDir in [fileDir,reduceDir]:
+            if os.path.exists(oneDir) == False:
+                raise ValueError("Input directory "+oneDir+" not found")
+        
         self.fileDir = fileDir
-
+        self.reduceDir = reduceDir
+        
         if testMode == True:
             fileList = glob.glob(self.fileDir+'*I003.fits')
         else:
@@ -36,11 +41,20 @@ class ncFiles():
         self.flags = flags_input
 
     def run_pipe(self):
-        """ Runs the pipeline on the file list """
+        """ Runs the pipeline on the file list
+        Starts by created a symbolic link to the original data
+        """
         dirOutput = []
         for oneFile in self.fileList:
-            head = fits.getheader(oneFile)
-            cmd = ncdhasApp + ' '+ oneFile + ' '+self.flags
+            ## Make a symbolic link to the ramp
+            baseName = os.path.basename(oneFile)
+            rampFile = reducedDir+baseName
+            if os.path.exists(rampFile) == False:
+                ## Only make a symlink if there isn't one there
+                os.symlink(oneFile,rampFile)
+            
+            head = fits.getheader(rampFile)
+            cmd = ncdhasApp + ' '+ rampFile + ' '+self.flags
             dirOutput.append('Command to be executed:')
             dirOutput.append(cmd)
         
@@ -54,7 +68,7 @@ class ncFiles():
                 saveout="Unknown error for command:"+cmd
                 dirOutput.append(saveout)
                 
-        with open(self.fileDir+'ncdhas_output.txt','w') as outputfile:
+        with open(self.reduceDir+'ncdhas_output.txt','w') as outputfile:
             for line in dirOutput:
                 outputfile.write(line+'\n')
 
@@ -62,7 +76,7 @@ class ncFiles():
 
 
 if __name__ == "__main__":
-    fFiles = ncFiles(AZstableDir,flags_all)
+    fFiles = ncFiles(AZstableDir,reducedDir,flags_all)
     fFiles.run_pipe()
 
 
