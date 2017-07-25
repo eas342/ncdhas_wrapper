@@ -1,0 +1,5 @@
+inputFiles: /data1/Local/AZLabStability/raw/*.fits ## Wildcard search for relevant FITS files
+outputDir: /data1/Local/AZLabStability/red_03/ ## Output directory
+flags_all: "+ow +wi +wd +ws -dr -cbp -cs -cbs -cd +mf 2 -ipc -cl -cf -cgm +nf 5" ## NCDHAS flags
+## In this example, turn off almost everything.
+description: This is a set of parameters for reducing the AZLab Stability, flood-illuminated data. We were approaching saturation at the top of the wells, so Karl recommends using just 5 frames, which we've attempted here.
